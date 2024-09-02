@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+	<body style="overflow: hidden">
+		<main>
+			<div class="card">
+				<img loading="eager" src="me.png" alt="pfp" draggable="false">
+				<div class="name">
+					<h1>winter_</h1>
+					<div class="socials">
+					<a href="https://github.com/winterunderscore" rel="nofollow noopener" target="_blank">
+						<img src="github.svg" alt="github" title="winterunderscore" draggable="false">
+						<p><span>@</span>winterunderscore</p>
+					</a>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<div id="nodes"></div>
+
+		<script>
+			class Node {
+				element;
+				links;
+				constraint;
+				size;
+				x;
+				y;
+				
+				constructor(size) {
+					this.element = document.createElement("div");
+					this.element.setAttribute("class", "node");
+					this.size = size;
+					this.links = [];
+					this.constraint = 10;
+					this.x = 0;
+					this.y = 0;
+					this.updateStyles();
+				}
+
+				updateStyles() {
+					this.element.style.height = this.size + "px";
+					this.element.style.width = this.size + "px";
+					this.element.style.position = "absolute";
+					this.element.style.top = this.y - this.size/2 + "px";
+					this.element.style.left = this.x - this.size/2 + "px";
+				}
+
+				linkTo(node) {
+					this.links.push(node);
+					node.links.push(this);
+				}
+				
+				applyConstraints() {
+					for (let link of this.links) {
+						let dist_x = link.x - this.x;
+						let dist_y = link.y - this.y;
+
+						let constraintLimit = this.constraint
+						if (link.constraint < constraintLimit) {
+							constraintLimit = link.constraint
+						}
+						if (Math.abs(dist_x) > constraintLimit || Math.abs(dist_y) > constraintLimit) {
+							let dist_len = Math.sqrt(dist_x*dist_x + dist_y*dist_y);
+							if (dist_len == 0) { return }
+							let n_dist_x = dist_x/dist_len;
+							let n_dist_y = dist_y/dist_len;
+							let c_x = n_dist_x * constraintLimit;
+							let c_y = n_dist_y * constraintLimit;
+							link.x = this.x + c_x;
+							link.y = this.y + c_y;
+							link.applyConstraints();
+						}
+					}
+				}
+			}
+
+			function updateStyles(nodes) {
+				for (let node of nodes) {
+					node.updateStyles();
+				}
+			}
+
+			const fabrik_limit = 30;
+			function fabrik(nodes, start_x, start_y, end_x, end_y) {
+				for (let i = 0; i < fabrik_limit; i++) {
+					let n = nodes[0];
+					n.x = start_x;
+					n.y = start_y;
+					n.applyConstraints();
+					let n_e = nodes[nodes.length-1]
+					n_e.x = end_x;
+					n_e.y = end_y;
+					n_e.applyConstraints();
+
+					if (n.x === start_x && n.y === start_y && n_e.x === end_x && n_e.y === end_y) {
+						break;
+					}
+				}
+				let n = nodes[0];
+				n.x = start_x;
+				n.y = start_y;
+				n.applyConstraints();
+			}
+
+			let nodesContainer = document.getElementById("nodes");
+
+			let nodes = [[], [], [], []];
+			for (let i = 0; i < 100; i++) {
+				for (let n = 0; n < 4; n++) {
+					let node = new Node(20);
+					nodesContainer.appendChild(node.element);
+					if (i != 0) {
+						node.linkTo(nodes[n][i-1]);
+						node.constraint = 10;
+					}
+					nodes[n].push(node);
+				}
+			}
+
+			document.onmousemove = function(e) {
+				let width = document.body.scrollWidth,
+					height = document.body.scrollHeight;
+				fabrik(nodes[0], 0,0, e.clientX, e.clientY)
+				fabrik(nodes[1], width,0, e.clientX, e.clientY)
+				fabrik(nodes[2], 0,height, e.clientX, e.clientY)
+				fabrik(nodes[3], width,height, e.clientX, e.clientY)
+
+				for (nodeGroup of nodes) {
+					updateStyles(nodeGroup);
+				}
+			}
+		</script>
+		<style>
+			*,
+			*::before,
+			*::after {
+				margin: 0;
+				box-sizing: border-box;
+			}
+
+			html {
+				height: 100%;
+
+				overflow: hidden;
+				overscroll-behavior: none;
+
+				background-color: black;
+				color: white;
+
+				font-family: "Ubuntu", sans-serif;
+			}
+
+			body {
+				height: 100%;
+
+				display: grid;
+				place-items: center;
+			}
+
+			body > main {
+				height: 100%;
+
+				display: grid;
+				place-items: center;
+			}
+
+			body > main > div {
+				grid-column: 1;
+				grid-row: 1;
+			}
+
+			span {
+				user-select: none;
+			}
+
+			h1 {
+				font-size: min(10vw, 10vh);
+
+				text-transform: lowercase;
+				user-select: none;
+
+				letter-spacing: 2px;
+			}
+
+			.card {
+				display: flex;
+				flex-direction: row;
+				gap: 1rem;
+			}
+
+			.card > img {
+				height: min(15vw, 15vh);
+				pointer-events: none;
+				user-select: none;
+				-webkit-user-drag: none;
+				border-radius: 50%;
+			}
+
+			.socials {
+				display: flex;
+
+				flex-direction: row;
+				justify-content: space-between;
+
+				padding-left: 6px;
+			}
+
+			.socials > a {
+				display: flex;
+				flex-direction: row;
+
+				gap: 0.25rem;
+				text-decoration: none;
+
+				color: white;
+			}
+
+			.socials img {
+				width: 1.25rem;
+				height: 1.25rem;
+
+				user-select: none;
+				-webkit-user-drag: none;
+			}
+
+			#nodes {
+				z-index: 100;
+				position: fixed;
+				top: 0;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				pointer-events: none;
+				mix-blend-mode: exclusion;
+			}
+
+			.node {
+				background-color: white;
+				border-radius: 50%;
+				pointer-events: none;
+			}
+		</style>
+	</body>	       
+</html>
