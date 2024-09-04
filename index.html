@@ -140,11 +140,27 @@
 				}
 			}
 
-			document.onmousemove = function(e) {
+			document.addEventListener("mousemove", onpointermove);
+			document.addEventListener("mouseenter", onpointermove);
+			document.addEventListener("touchstart", onpointermove);
+			document.addEventListener("touchmove", onpointermove);
+			
+			function onpointermove(e) {
+				let x, y;
+				if (e.type.includes("touch")) {
+					const { touches, changedTouches } = e.originalEvent ?? e;
+					const touch = touches[0] ?? changedTouches[0];
+					x = touch.pageX;
+					y = touch.pageY;
+				} else if (e.type.includes("mouse")) {
+					x = e.clientX;
+					y = e.clientY;
+				}
 				let width = document.body.scrollWidth,
 					height = document.body.scrollHeight;
-				let x = e.clientX/width*100,
-					y = e.clientY/height*100
+				x = x/width*100;
+				y = y/height*100;
+
 				fabrik(nodes[0], 0,0, x, y)
 				fabrik(nodes[1], 100,0, x, y)
 				fabrik(nodes[2], 0,100, x, y)
